@@ -1,13 +1,13 @@
 metadata:
-  title: Text
+  title: Buttons
 ---
 question: |
-  What are your favorite things to eat?
-subquestion: |
-  Please be specific.
-fields:
-  - Vegetable: target_variable
-  - Fruit: other_target_variable
+  What type of belly button do you have?
+field: target_variable
+buttons:
+  - Innie
+  - Outie
+  - No belly button
 ---
 sets: all_done
 question: Result of question
@@ -17,4 +17,3 @@ subquestion: |
 mandatory: true
 code: |
   all_done
-

@@ -1,23 +1,22 @@
 metadata:
-  title: Optional field
+  title: Hints
 ---
 question: |
   What are your favorite things to eat?
 subquestion: |
-  You may not like any vegetables,
-  but at least tell me your favorite
-  fruit.
+  Please be specific.
 fields:
   - Vegetable: target_variable
-    required: false
+    hint: e.g., eggplant, turnips
   - Fruit: other_target_variable
+    hint: e.g., apples, oranges
 ---
 sets: all_done
 question: Result of question
 subquestion: |
-  other_target_variable is:
-  "${ other_target_variable }"
+  target_variable is: "${ target_variable }"
 ---
 mandatory: true
 code: |
   all_done
+

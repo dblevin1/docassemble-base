@@ -1,13 +1,14 @@
 metadata:
-  title: Text
+  title: Radio buttons
 ---
 question: |
-  What are your favorite things to eat?
-subquestion: |
-  Please be specific.
-fields:
-  - Vegetable: target_variable
-  - Fruit: other_target_variable
+  What type of shoes do you wear?
+field: target_variable
+choices:
+  - Sneakers
+  - Sandals
+  - Clogs
+  - Other
 ---
 sets: all_done
 question: Result of question
@@ -17,4 +18,3 @@ subquestion: |
 mandatory: true
 code: |
   all_done
-
