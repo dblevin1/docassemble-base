@@ -1,5 +1,21 @@
 metadata:
-  title: Language
+  title: Set language
+  example start: 2
+  example end: 3
+---
+modules:
+  - docassemble.base.util
+---
+initial: true
+code: |
+  set_language(language)
+---
+question: |
+  What language do you speak?
+field: language
+choices:
+  - English: en
+  - Español: es
 ---
 language: es
 question: |
@@ -13,16 +29,6 @@ fields:
   - Meaning of life: meaning_life
 ---
 question: |
-  What language do you speak?
-field: language
-choices:
-  - English: en
-  - Español: es
----
-modules:
-  - docassemble.base.util
----
-question: |
   The meaning of life
 subquestion: |
   The interviewee said the meaning of life
@@ -30,10 +36,6 @@ subquestion: |
 
   ${ meaning_life }
 sets: all_done
----
-initial: true
-code: |
-  set_language(language)
 ---
 mandatory: true
 code: all_done

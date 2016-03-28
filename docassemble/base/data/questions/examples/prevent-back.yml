@@ -1,10 +1,19 @@
 metadata:
   title: Disable back button
+  example start: 2
+  example end: 2
 ---
-prevent_going_back: true
+modules:
+  - docassemble.base.util
+---
+code: |
+  app_submitted = True
+  prevent_going_back()
+---
 question: |
   Your application for ${ service }
   has been submitted.
+need: app_submitted
 sets: all_done
 ---
 question: |
@@ -17,4 +26,3 @@ choices:
 ---
 mandatory: true
 code: all_done
-
