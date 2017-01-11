@@ -1,0 +1,21 @@
+---
+modules:
+  - docassemble.base.legal
+---
+objects:
+  - user: Individual
+---
+question: >-
+  How old are you?
+fields:
+  - Age in years: user.age
+    datatype: number
+---
+mandatory: true
+code: |
+  need(user.age)
+---
+mandatory: true
+question: |
+  You are ${ user.age_in_years() } years old.
+---
