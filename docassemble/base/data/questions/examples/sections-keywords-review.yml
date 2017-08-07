@@ -1,32 +1,57 @@
 metadata:
-  title: Navigation bar
+  title: Navigation with review pages
   short title: Navigation
-  documentation: "https://docassemble.org/docs/initial.html#navigation bar"
+  documentation: "https://docassemble.org/docs/initial.html#sections"
   example start: 1
-  example end: 16
+  example end: 4
 ---
 sections:
-  - Introduction
-  - About you:
-    - Contact info
-    - Demographics
-  - Preferences
-  - Conclusion
+  - intro: Introduction
+  - about: About you
+    subsections:
+      - contact: Contact info
+      - demographic: Demographics
+  - prefs: Preferences
+  - conclusion: Conclusion
+---
+event: contact
+section: contact
+question: |
+  Review contact information
+review:
+  - Edit name: first_name
+    button: |
+      Name: ${ first_name } ${ last_name }
+  - Edit e-mail: email_address
+    button: |
+      E-mail: ${ email_address }
+---
+event: demographic
+section: demographic
+question: |
+  Review demographic information
+review:
+  - Edit gender: gender
+    button: |
+      Gender: ${ gender }
+  - Edit belly button: belly_button
+    button: |
+      Belly button: ${ belly_button }
+---
+event: prefs
+section: prefs
+question: |
+  Preferences
+review:
+  - Edit fruit: favorite_fruit
+    button: |
+      Favorite fruit: ${ favorite_fruit }
+  - Edit vegetable: favorite_vegetable
+    button: |
+      Favorite vegetable: ${ favorite_vegetable }
 ---
 features:
   navigation: True
----
-modules:
-  docassemble.base.util
----
-mandatory: True
-code: |
-  menu_items = [ action_menu_item('Roadmap', 'road_map') ]
----
-initial: True
-code: |
-  if returning_user(minutes=0.5):
-    welcome_back
 ---
 mandatory: True
 question: |
@@ -43,7 +68,7 @@ question: |
   I am going to ask you some
   questions about yourself.
 field: intro_to_about_you
-section: About you
+section: about
 ---
 mandatory: True
 question: |
@@ -51,7 +76,7 @@ question: |
 fields:
   - First Name: first_name
   - Last Name: last_name
-section: Contact info
+section: contact
 ---
 mandatory: True
 question: |
@@ -59,6 +84,7 @@ question: |
 fields:
   - E-mail: email_address
     datatype: email
+section: contact
 ---
 mandatory: True
 question: |
@@ -68,37 +94,31 @@ choices:
   - Male
   - Female
   - Something else
-section: Demographics
+section: demographic
 ---
 mandatory: True
 question: |
   What kind of belly button
   do you have?
-subquestion: |
-  To see what a user would
-  see after returning to
-  the interview after a period
-  of absence, try waiting
-  thirty seconds, then
-  [click into the
-  interview](${ interview_url(local=True) }).
 field: belly_button
 choices:
   - Innie
   - Outie
+section: demographic
 ---
 mandatory: True
 question: |
   What is your favorite fruit?
 fields:
   - Favorite fruit: favorite_fruit
-section: Preferences
+section: prefs
 ---
 mandatory: True
 question: |
   What is your favorite vegetable?
 fields:
   - Favorite vegetable: favorite_vegetable
+section: prefs
 ---
 mandatory: True
 question: Thank you.
@@ -110,34 +130,4 @@ subquestion: |
   I am going to go eat some
   ${ favorite_vegetable }
   now.
-section: Conclusion
----
-event: welcome_back
-question: |
-  Welcome back!
-subquestion: |
-  You are currently in the
-  **${ nav.get_section(display=True) }**
-  section.
-
-  ${ nav }
-
-  Press "Continue" to pick up
-  where you left off.
-buttons:
-  Continue: continue
----
-event: road_map
-question: |
-  Roadmap
-subquestion: |
-  You are currently in the
-  **${ nav.get_section(display=True) }**
-  section.
-
-  ${ nav }
-
-  Press "Continue" to resume the
-  interview.
-buttons:
-  Continue: continue
+section: conclusion

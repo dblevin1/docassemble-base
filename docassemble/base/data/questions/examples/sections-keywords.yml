@@ -1,32 +1,21 @@
 metadata:
-  title: Navigation bar
+  title: Navigation with keywords
   short title: Navigation
-  documentation: "https://docassemble.org/docs/initial.html#navigation bar"
+  documentation: "https://docassemble.org/docs/initial.html#sections"
   example start: 1
-  example end: 16
+  example end: 11
 ---
 sections:
-  - Introduction
-  - About you:
-    - Contact info
-    - Demographics
-  - Preferences
-  - Conclusion
+  - intro: Introduction
+  - about: About you
+    subsections:
+      - contact: Contact info
+      - demographic: Demographics
+  - prefs: Preferences
+  - conclusion: Conclusion
 ---
 features:
   navigation: True
----
-modules:
-  docassemble.base.util
----
-mandatory: True
-code: |
-  menu_items = [ action_menu_item('Roadmap', 'road_map') ]
----
-initial: True
-code: |
-  if returning_user(minutes=0.5):
-    welcome_back
 ---
 mandatory: True
 question: |
@@ -43,7 +32,7 @@ question: |
   I am going to ask you some
   questions about yourself.
 field: intro_to_about_you
-section: About you
+section: about
 ---
 mandatory: True
 question: |
@@ -51,7 +40,7 @@ question: |
 fields:
   - First Name: first_name
   - Last Name: last_name
-section: Contact info
+section: contact
 ---
 mandatory: True
 question: |
@@ -68,20 +57,12 @@ choices:
   - Male
   - Female
   - Something else
-section: Demographics
+section: demographic
 ---
 mandatory: True
 question: |
   What kind of belly button
   do you have?
-subquestion: |
-  To see what a user would
-  see after returning to
-  the interview after a period
-  of absence, try waiting
-  thirty seconds, then
-  [click into the
-  interview](${ interview_url(local=True) }).
 field: belly_button
 choices:
   - Innie
@@ -92,7 +73,7 @@ question: |
   What is your favorite fruit?
 fields:
   - Favorite fruit: favorite_fruit
-section: Preferences
+section: prefs
 ---
 mandatory: True
 question: |
@@ -110,34 +91,4 @@ subquestion: |
   I am going to go eat some
   ${ favorite_vegetable }
   now.
-section: Conclusion
----
-event: welcome_back
-question: |
-  Welcome back!
-subquestion: |
-  You are currently in the
-  **${ nav.get_section(display=True) }**
-  section.
-
-  ${ nav }
-
-  Press "Continue" to pick up
-  where you left off.
-buttons:
-  Continue: continue
----
-event: road_map
-question: |
-  Roadmap
-subquestion: |
-  You are currently in the
-  **${ nav.get_section(display=True) }**
-  section.
-
-  ${ nav }
-
-  Press "Continue" to resume the
-  interview.
-buttons:
-  Continue: continue
+section: conclusion
