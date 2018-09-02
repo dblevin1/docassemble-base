@@ -50,11 +50,18 @@ attachments:
   - name: Unredacted petition
     filename: petition_unredacted
     redact: False
+    valid formats:
+      - pdf
+      - rtf
+      - docx
     content: |
       ${ petition_text }
   - name: Redacted petition
     filename: petition_redacted
-    redact: True
+    valid formats:
+      - pdf
+      - rtf
+      - docx
     content: |
       ${ petition_text }
 ---
