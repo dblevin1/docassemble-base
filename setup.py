@@ -47,7 +47,7 @@ def find_package_data(where='.', package='', exclude=standard_exclude, exclude_d
     return out
 
 install_requires = [
-    'docassemble==1.4.51',
+    'docassemble==1.4.52',
     "3to2==1.1.1",
     "alembic==1.9.2",
     "astunparse==1.6.3",
@@ -63,7 +63,7 @@ install_requires = [
     "bcrypt==4.0.1",
     "beautifulsoup4==4.11.2",
     "bleach==6.0.0",
-    "blinker==1.5",
+    "blinker==1.6.2",
     "boto==2.49.0",
     "boto3==1.26.64",
     "botocore==1.29.64",
@@ -91,7 +91,7 @@ install_requires = [
     "docxtpl==0.16.6",
     "et-xmlfile==1.1.0",
     "exceptiongroup==1.1.0",
-    "Flask==2.2.2",
+    "Flask==2.3.2",
     "Flask-Mail==0.9.1",
     "future==0.18.3",
     "geographiclib==2.0",
@@ -218,7 +218,7 @@ install_requires = [
     "user-agents==2.2.0",
     "wcwidth==0.2.6",
     "webencodings==0.5.1",
-    "Werkzeug==2.2.3",
+    "Werkzeug==2.3.3",
     "xfdfgen==0.4",
     "xlrd==2.0.1",
     "XlsxWriter==3.0.8",
