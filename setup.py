@@ -232,7 +232,7 @@ else:
     install_requires.append("docassemble-backports==1.0")
 
 setup(name='docassemble.base',
-      version='1.4.52.1',
+      version='1.4.52.2',
       python_requires='>=3.8',
       description=('The base components of the docassemble system.'),
       long_description=read("README.md"),
