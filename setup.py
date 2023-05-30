@@ -47,7 +47,7 @@ def find_package_data(where='.', package='', exclude=standard_exclude, exclude_d
     return out
 
 install_requires = [
-    'docassemble==1.4.52',
+    'docassemble==1.4.55',
     "3to2==1.1.1",
     "alembic==1.9.2",
     "astunparse==1.6.3",
@@ -80,7 +80,6 @@ install_requires = [
     "convertapi==1.5.0",
     "cryptography==39.0.1",
     "cssselect2==0.7.0",
-    "da-pkg-resources==0.0.1",
     "defusedxml==0.7.1",
     "deprecation==2.1.0",
     "Docassemble-Pattern==3.6.6",
@@ -233,7 +232,7 @@ else:
 
 setup(name='docassemble.base',
       version='1.4.55',
-      python_requires='>=3.8',
+      python_requires='>=3.9',
       description=('The base components of the docassemble system.'),
       long_description=read("README.md"),
       long_description_content_type='text/markdown',
