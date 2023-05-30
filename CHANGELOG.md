@@ -1,6 +1,10 @@
 # Changelog
 
 <!-- insertion marker -->
+## [v1.4.55.1](https://github.com/dblevin1/docassemble-base/releases/tag/v1.4.55.1) - 2023-05-30
+
+<small>[Compare with v1.4.52.3](https://github.com/dblevin1/docassemble-base/compare/v1.4.52.3...v1.4.55.1)</small>
+
 ## [v1.4.52.3](https://github.com/dblevin1/docassemble-base/releases/tag/v1.4.52.3) - 2023-05-26
 
 <small>[Compare with v](https://github.com/dblevin1/docassemble-base/compare/v...v1.4.52.3)</small>
