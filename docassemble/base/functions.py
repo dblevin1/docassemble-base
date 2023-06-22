@@ -70,6 +70,7 @@ equals_byte = bytes('=', 'utf-8')
 TypeType = type(type(None))
 locale.setlocale(locale.LC_ALL, '')
 contains_volatile = re.compile(r'^(x\.|x\[|.*\[[ijklmn]\])')
+match_brackets_or_dot = re.compile(r'(\[.+?\]|\.[a-zA-Z_][a-zA-Z0-9_]*)')
 
 __all__ = ['alpha', 'roman', 'item_label', 'ordinal', 'ordinal_number', 'comma_list', 'word', 'get_language', 'set_language', 'get_dialect', 'set_country', 'get_country', 'get_locale', 'set_locale', 'comma_and_list', 'need', 'nice_number', 'quantity_noun', 'currency_symbol', 'verb_past', 'verb_present', 'noun_plural', 'noun_singular', 'indefinite_article', 'capitalize', 'space_to_underscore', 'force_ask', 'period_list', 'name_suffix', 'currency', 'static_image', 'title_case', 'url_of', 'process_action', 'url_action', 'get_info', 'set_info', 'get_config', 'prevent_going_back', 'qr_code', 'action_menu_item', 'from_b64_json', 'defined', 'value', 'message', 'response', 'json_response', 'command', 'background_response', 'background_response_action', 'single_paragraph', 'quote_paragraphs', 'location_returned', 'location_known', 'user_lat_lon', 'interview_url', 'interview_url_action', 'interview_url_as_qr', 'interview_url_action_as_qr', 'interview_email', 'get_emails', 'action_arguments', 'action_argument', 'get_default_timezone', 'user_logged_in', 'user_privileges', 'user_has_privilege', 'user_info', 'background_action', 'background_response', 'background_response_action', 'us', 'set_live_help_status', 'chat_partners_available', 'phone_number_in_e164', 'phone_number_formatted', 'phone_number_is_valid', 'countries_list', 'country_name', 'write_record', 'read_records', 'delete_record', 'variables_as_json', 'all_variables', 'language_from_browser', 'device', 'plain', 'bold', 'italic', 'subdivision_type', 'indent', 'raw', 'fix_punctuation', 'set_progress', 'get_progress', 'referring_url', 'undefine', 'invalidate', 'dispatch', 'yesno', 'noyes', 'phone_number_part', 'log', 'encode_name', 'decode_name', 'interview_list', 'interview_menu', 'server_capabilities', 'session_tags', 'get_chat_log', 'get_user_list', 'get_user_info', 'set_user_info', 'get_user_secret', 'create_user', 'create_session', 'get_session_variables', 'set_session_variables', 'go_back_in_session', 'manage_privileges', 'redact', 'forget_result_of', 're_run_logic', 'reconsider', 'get_question_data', 'set_save_status', 'single_to_double_newlines', 'verbatim', 'add_separators', 'store_variables_snapshot', 'update_terms', 'set_variables', 'language_name', 'run_action_in_session']
 
@@ -3627,7 +3628,7 @@ def force_ask(*pargs, **kwargs):
         if 'event_stack' in this_thread.internal and unique_id in this_thread.internal['event_stack']:
             this_thread.internal['event_stack'][unique_id] = []
     if kwargs.get('persistent', True):
-        raise ForcedNameError(*the_pargs, user_dict=get_user_dict())
+        raise ForcedNameError(*the_pargs, user_dict=get_user_dict(), evaluate=kwargs.get('evaluate', False))
     force_ask_nameerror(the_pargs[0])
 
 
@@ -3635,7 +3636,7 @@ def force_ask_nameerror(variable_name, priority=False):
     raise NameError("name '" + str(variable_name) + "' is not defined")
 
 
-def force_gather(*pargs, forget_prior=False):
+def force_gather(*pargs, forget_prior=False, evaluate=False):
     """Similar to force_ask(), except it works globally across all users
     and sessions and it does not seek definitions of already-defined
     variables. In addition to making a single attempt to ask a
@@ -3655,12 +3656,15 @@ def force_gather(*pargs, forget_prior=False):
         if var_name in the_user_dict:
             the_context[var_name] = the_user_dict[var_name]
     last_variable_name = None
-    for variable_name in unpack_pargs(pargs):
+    pargs = unpack_pargs(pargs)
+    if evaluate:
+        pargs = intrinsic_names_of(*pargs, the_user_dict=the_user_dict)
+    for variable_name in pargs:
         if variable_name not in [(variable_dict if isinstance(variable_dict, str) else variable_dict['var']) for variable_dict in this_thread.internal['gather']]:
             this_thread.internal['gather'].append({'var': variable_name, 'context': the_context})
         last_variable_name = variable_name
     if last_variable_name is not None:
-        raise ForcedNameError(last_variable_name, gathering=True)
+        raise ForcedNameError(last_variable_name, gathering=True, user_dict=the_user_dict)
 
 
 def static_filename_path(filereference):
@@ -4449,20 +4453,20 @@ def _defined_internal(var, caller: DefCaller, alt=None, prior=False):
         if frame is None:
             if caller.is_pure():
                 return failure_val
-            force_ask(variable, persistent=False)
+            force_ask_nameerror(variable)
         if user_dict_name in frame.f_locals:
             the_user_dict = eval(user_dict_name, frame.f_locals)
             if variable in the_user_dict:
                 break
             if caller.is_pure():
                 return failure_val
-            force_ask(variable, persistent=False)
+            force_ask_nameerror(variable)
         else:
             the_user_dict = frame.f_locals
     if variable not in the_user_dict:
         if caller.is_pure():
             return failure_val
-        force_ask(variable, persistent=False)
+        force_ask_nameerror(variable)
     if len(components) == 1:
         if caller.is_predicate():
             return True
@@ -4470,14 +4474,36 @@ def _defined_internal(var, caller: DefCaller, alt=None, prior=False):
     cum_variable = ''
     if caller.is_pure():
         this_thread.probing = True
+    has_random_instance_name = False
     for elem in components:
         if elem[0] == 'name':
-            # on a new name, we re-accumulate the prev checked code from scratch
             cum_variable = elem[1]
             continue
         if elem[0] == 'attr':
+            base_var = cum_variable
             to_eval = "hasattr(" + cum_variable + ", " + repr(elem[1]) + ")"
             cum_variable += '.' + elem[1]
+            try:
+                result = eval(to_eval, the_user_dict)
+            except:
+                if caller.is_pure():
+                    this_thread.probing = False
+                    return failure_val
+                force_ask_nameerror(base_var)
+            if result:
+                continue
+            if caller.is_pure():
+                this_thread.probing = False
+                return failure_val
+            the_cum = eval(base_var, the_user_dict)
+            try:
+                if not the_cum.has_nonrandom_instance_name:
+                    has_random_instance_name = True
+            except:
+                pass
+            if has_random_instance_name:
+                force_ask_nameerror(cum_variable)
+            getattr(the_cum, elem[1])
         elif elem[0] == 'index':
             try:
                 the_index = eval(elem[1], the_user_dict)
@@ -4485,41 +4511,44 @@ def _defined_internal(var, caller: DefCaller, alt=None, prior=False):
                 if caller.is_pure():
                     this_thread.probing = False
                     return failure_val
-                force_ask(elem[1], persistent=False)
+                value(elem[1])
             try:
                 the_cum = eval(cum_variable, the_user_dict)
             except:
                 if caller.is_pure():
                     this_thread.probing = False
                     return failure_val
-                force_ask(cum_variable, persistent=False)
+                force_ask_nameerror(cum_variable)
             if hasattr(the_cum, 'instanceName') and hasattr(the_cum, 'elements'):
                 var_elements = cum_variable + '.elements'
             else:
                 var_elements = cum_variable
-
             if isinstance(the_index, int):
                 to_eval = 'len(' + var_elements + ') > ' + str(the_index)
             else:
                 to_eval = elem[1] + " in " + var_elements
             cum_variable += '[' + elem[1] + ']'
-        # elif elem[0] == 'binop':
-        #     # no easy way to check if 2 objs can be compared w/o just comparing
-        #     to_eval = elem[1]
-        #     cum_variable += elem[1]
-        try:
-            result = eval(to_eval, the_user_dict)
-        except:
+            try:
+                result = eval(to_eval, the_user_dict)
+            except:
+                # the evaluation probably will never fail because we know the base variable is defined
+                if caller.is_pure():
+                    this_thread.probing = False
+                    return failure_val
+                force_ask_nameerror(cum_variable)
+            if result:
+                continue
             if caller.is_pure():
                 this_thread.probing = False
                 return failure_val
-            force_ask(to_eval, persistent=False)
-        if result:
-            continue
-        if caller.is_pure():
-            this_thread.probing = False
-            return failure_val
-        force_ask(var, persistent=False)
+            try:
+                if not the_cum.has_nonrandom_instance_name:
+                    has_random_instance_name = True
+            except:
+                pass
+            if has_random_instance_name:
+                force_ask_nameerror(cum_variable)
+            the_cum[the_index]
     if caller.is_pure():
         this_thread.probing = False
     if caller.is_predicate():
@@ -5313,11 +5342,60 @@ def re_run_logic():
     raise ForcedReRun()
 
 
-def reconsider(*pargs):
+def intrinsic_name_of(var_name, the_user_dict=None):
+    if the_user_dict is None:
+        the_user_dict = get_user_dict()
+    from docassemble.base.util import DAObject  # pylint: disable=import-outside-toplevel
+    expression_as_list = [x for x in match_brackets_or_dot.split(var_name) if x != '']
+    n = len(expression_as_list)
+    i = n
+    while i > 0:
+        try:
+            item = eval(var_name, the_user_dict)
+            if isinstance(item, DAObject) and item.has_nonrandom_instance_name:
+                var_name = item.instanceName
+                break
+        except:
+            pass
+        i -= 1
+        var_name = ''.join(expression_as_list[0:i])
+    return var_name + (''.join(expression_as_list[i:n]))
+
+
+def intrinsic_names_of(*pargs, the_user_dict=None):
+    if the_user_dict is None:
+        the_user_dict = get_user_dict()
+    output = []
+    for parg in pargs:
+        if isinstance(parg, str):
+            output.append(intrinsic_name_of(parg, the_user_dict=the_user_dict))
+        elif isinstance(parg, dict):
+            if len(parg) == 1 and ('undefine' in parg or 'invalidate' in parg or 'recompute' in parg or 'follow up' in parg):
+                new_dict = {}
+                for key, item in parg.items():
+                    if isinstance(item, str):
+                        new_dict[key] = intrinsic_name_of(item, the_user_dict=the_user_dict)
+                    if isinstance(item, list):
+                        new_dict[key] = [intrinsic_name_of(subitem, the_user_dict=the_user_dict) if isinstance(subitem, str) else subitem for subitem in item]
+                if len(new_dict):
+                    output.append(new_dict)
+                else:
+                    output.append(parg)
+            else:
+                output.append(parg)
+        else:
+            output.append(parg)
+    return output
+
+
+def reconsider(*pargs, evaluate=False):
     """Ensures that the value of one or more variables is freshly calculated."""
     if 'reconsidered' not in this_thread.misc:
         this_thread.misc['reconsidered'] = set()
-    for var in unpack_pargs(pargs):
+    pargs = unpack_pargs(pargs)
+    if evaluate:
+        pargs = intrinsic_names_of(*pargs)
+    for var in pargs:
         if var in this_thread.misc['reconsidered']:
             continue
         undefine(var)
