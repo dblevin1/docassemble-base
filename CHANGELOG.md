@@ -1,6 +1,14 @@
 # Changelog
 
 <!-- insertion marker -->
+## [v1.4.61.2](https://github.com/dblevin1/docassemble-base/releases/tag/v1.4.61.2) - 2023-06-23
+
+<small>[Compare with v1.4.61.1](https://github.com/dblevin1/docassemble-base/compare/v1.4.61.1...v1.4.61.2)</small>
+
+### Added
+
+- add signature alignment for pdf filling ([917c661](https://github.com/dblevin1/docassemble-base/commit/917c6617a011c2e2ed9daa84cf44c32a8f13bd4b) by Daniel Blevins).
+
 ## [v1.4.61.1](https://github.com/dblevin1/docassemble-base/releases/tag/v1.4.61.1) - 2023-06-21
 
 <small>[Compare with v1.4.55.3](https://github.com/dblevin1/docassemble-base/compare/v1.4.55.3...v1.4.61.1)</small>
