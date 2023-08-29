@@ -48,7 +48,7 @@ from docassemble.base import __version__ as da_version
 import docassemble.base.filter
 import docassemble.base.pdftk
 import docassemble.base.file_docx
-from docassemble.base.error import DAError, DANotFoundError, MandatoryQuestion, DAErrorNoEndpoint, DAErrorMissingVariable, ForcedNameError, QuestionError, ResponseError, BackgroundResponseError, BackgroundResponseActionError, CommandError, CodeExecute, DAValidationError, ForcedReRun, LazyNameError, DAAttributeError, DAIndexError, DAException
+from docassemble.base.error import DAError, DANotFoundError, MandatoryQuestion, DAErrorNoEndpoint, DAErrorMissingVariable, ForcedNameError, QuestionError, ResponseError, BackgroundResponseError, BackgroundResponseActionError, CommandError, CodeExecute, DAValidationError, ForcedReRun, LazyNameError, DAAttributeError, DAIndexError, DAException, DANameError
 import docassemble.base.functions
 import docassemble.base.util
 from docassemble.base.functions import pickleable_objects, word, get_language, RawValue, get_config
@@ -598,13 +598,17 @@ class InterviewStatus:
                     elif field.datatype == 'threestate':
                         checkboxes[field.saveas] = 'None'
                     elif field.datatype in ['multiselect', 'object_multiselect', 'checkboxes', 'object_checkboxes']:
+                        is_object = field.datatype.startswith('object')
                         if field.choicetype in ['compute', 'manual']:
                             pairlist = list(self.selectcompute[field.number])
                         else:
                             pairlist = []
                         for pair in pairlist:
                             if isinstance(pair['key'], str):
-                                checkboxes[safeid(from_safeid(field.saveas) + "[B" + myb64quote(pair['key']) + "]")] = 'False'
+                                if is_object:
+                                    checkboxes[safeid(from_safeid(field.saveas) + "[O" + myb64quote(pair['key']) + "]")] = 'False'
+                                else:
+                                    checkboxes[safeid(from_safeid(field.saveas) + "[B" + myb64quote(pair['key']) + "]")] = 'False'
                             else:
                                 checkboxes[safeid(from_safeid(field.saveas) + "[R" + myb64quote(repr(pair['key'])) + "]")] = 'False'
                     elif not self.extras['required'][field.number]:
@@ -1988,6 +1992,17 @@ def evaluate_image_in_item(data, user_dict):
     return data
 
 
+def process_js_vars(expr):
+    output = set()
+    for item in expr:
+        m = re.search('^(.*)\[[an]ota\]$', item)
+        if m:
+            output.add(m.group(1))
+        else:
+            output.add(item)
+    return list(output)
+
+
 class Question:
 
     def idebug(self, data):
@@ -2099,7 +2114,7 @@ class Question:
                 self.interview.navigation_back_button = data['features']['navigation back button']
             if 'go full screen' in data['features'] and data['features']['go full screen'] is not None:
                 self.interview.force_fullscreen = data['features']['go full screen']
-            if 'navigation' in data['features'] and isinstance(data['features']['navigation'], bool):
+            if 'navigation' in data['features']:
                 self.interview.use_navigation = data['features']['navigation']
             if 'small screen navigation' in data['features']:
                 if data['features']['small screen navigation'] == 'dropdown':
@@ -3998,7 +4013,7 @@ class Question:
                             js_info['sign'] = False
                         js_info['mode'] = 0
                         js_info['expression'] = TextObject(definitions + str(field[key]).strip(), question=self, translate=False)
-                        js_info['vars'] = list(set(re.findall(r'(?:val|getField|daGetField)\(\'([^\)]+)\'\)', field[key]) + re.findall(r'(?:val|getField|daGetField)\("([^\)]+)"\)', field[key])))
+                        js_info['vars'] = process_js_vars(re.findall(r'(?:val|getField|daGetField)\(\'([^\)]+)\'\)', field[key]) + re.findall(r'(?:val|getField|daGetField)\("([^\)]+)"\)', field[key]))
                         if 'extras' not in field_info:
                             field_info['extras'] = {}
                         field_info['extras']['show_if_js'] = js_info
@@ -4012,7 +4027,7 @@ class Question:
                             js_info['sign'] = False
                         js_info['mode'] = 1
                         js_info['expression'] = TextObject(definitions + str(field[key]).strip(), question=self, translate=False)
-                        js_info['vars'] = list(set(re.findall(r'(?:val|getField|daGetField)\(\'([^\)]+)\'\)', field[key]) + re.findall(r'(?:val|getField|daGetField)\("([^\)]+)"\)', field[key])))
+                        js_info['vars'] = process_js_vars(re.findall(r'(?:val|getField|daGetField)\(\'([^\)]+)\'\)', field[key]) + re.findall(r'(?:val|getField|daGetField)\("([^\)]+)"\)', field[key]))
                         if 'extras' not in field_info:
                             field_info['extras'] = {}
                         field_info['extras']['show_if_js'] = js_info
@@ -6460,11 +6475,11 @@ class Question:
                 if current_role not in self.role and 'role_event' not in self.fields_used and self.question_type not in ('exit', 'logout', 'exit_logout', 'continue', 'restart', 'leave', 'refresh', 'signin', 'register', 'new_session', 'interview_exit'):
                     # logmessage("Calling role_event with " + ", ".join(self.fields_used))
                     user_dict['role_needed'] = self.role
-                    raise NameError("name 'role_event' is not defined")
+                    raise DANameError("name 'role_event' is not defined")
             elif self.interview.default_role is not None and current_role not in self.interview.default_role and 'role_event' not in self.fields_used and self.question_type not in ('exit', 'logout', 'exit_logout', 'continue', 'restart', 'leave', 'refresh', 'signin', 'register', 'new_session', 'interview_exit'):
                 # logmessage("Calling role_event with " + ", ".join(self.fields_used))
                 user_dict['role_needed'] = self.interview.default_role
-                raise NameError("name 'role_event' is not defined")
+                raise DANameError("name 'role_event' is not defined")
         if self.question_type == 'review' and sought is not None and not hasattr(self, 'review_saveas'):
             if 'event_stack' not in user_dict['_internal']:
                 user_dict['_internal']['event_stack'] = {}
@@ -8462,6 +8477,20 @@ class Interview:
                             docassemble.base.functions.this_thread.current_info.update({'action': exception_name, 'arguments': the_exception.arguments})
                         missingVariable = exception_name
                     else:
+                        if type(the_exception) is NameError:
+                            cl, exc, tb = sys.exc_info()
+                            errinfo = traceback.extract_tb(tb)[-1]
+                            if errinfo.filename[0] == '/':
+                                del cl
+                                del exc
+                                del tb
+                                extra = " in " + errinfo.filename
+                                if hasattr(errinfo, 'lineno'):
+                                    extra += " line " + str(errinfo.lineno)
+                                raise DAError("NameError: " + str(the_exception) + extra)
+                            del cl
+                            del exc
+                            del tb
                         follow_mc = True
                         missingVariable = extract_missing_name(the_exception)
                     variables_sought.add(missingVariable)
@@ -9271,6 +9300,20 @@ class Interview:
                     docassemble.base.functions.this_thread.misc['forgive_missing_question'] = [exception_name]
                 else:
                     # logmessage("regular nameerror")
+                    if type(the_exception) is NameError:
+                        cl, exc, tb = sys.exc_info()
+                        errinfo = traceback.extract_tb(tb)[-1]
+                        if errinfo.filename[0] == '/':
+                            del cl
+                            del exc
+                            del tb
+                            extra = " in " + errinfo.filename
+                            if hasattr(errinfo, 'lineno'):
+                                extra += " line " + str(errinfo.lineno)
+                            raise DAError("NameError: " + str(the_exception) + extra)
+                        del cl
+                        del exc
+                        del tb
                     follow_mc = True
                     newMissingVariable = extract_missing_name(the_exception)
                 if newMissingVariable == 'file':
@@ -9795,7 +9838,7 @@ def invalid_variable_name(varname):
     varname = re.sub(r'[\.\[].*', '', varname)
     if not valid_variable_match.match(varname):
         return True
-    return False
+    return illegal_variable_name(varname)
 
 
 def exec_with_trap(the_question, the_dict, old_variable=None):
